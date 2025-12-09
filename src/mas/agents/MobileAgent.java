@@ -10,7 +10,7 @@ import mas.world.Obstacle;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class MobileAgent extends LivingBeing {
+public class MobileAgent extends LivingBeing {
     protected int energyPoints;
     protected int maxEnergy;
     protected Direction lastDirection;

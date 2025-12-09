@@ -1,10 +1,6 @@
 package mas;
 
-import mas.agents.LivingBeing;
-import mas.agents.MasterAgent;
-import mas.agents.MobileAgent;
-import mas.agents.Species;
-import mas.agents.species.*;
+import mas.agents.*;
 import mas.data.Message;
 import mas.utils.RandomUtils;
 import mas.world.Map;
@@ -18,7 +14,7 @@ public class Simulation {
     private final int width = 14;
     private final int height = 8;
     private final int AGENTS_PER_SPECIES = 4;
-    private final int MAX_STEPS = 80;
+    private final int MAX_STEPS = 50;
     private int step = 0;
     private List<Species> participants;
 
@@ -34,18 +30,19 @@ public class Simulation {
     public void initialize() {
         // 1. Place Masters & 3. Place Agents
         for (Species s : participants) {
+            // Generic Master Placement
             switch (s) {
                 case BOWSER:
-                    placeMaster(MasterBowser.getInstance(1, 1));
+                    placeMaster(MasterAgent.getInstance(s, 1, 1));
                     break;
                 case KING_BOO:
-                    placeMaster(MasterKingBoo.getInstance(width - 2, 1));
+                    placeMaster(MasterAgent.getInstance(s, width - 2, 1));
                     break;
                 case LUIGI:
-                    placeMaster(MasterLuigi.getInstance(1, height - 2));
+                    placeMaster(MasterAgent.getInstance(s, 1, height - 2));
                     break;
                 case MARIO:
-                    placeMaster(MasterMario.getInstance(width - 2, height - 2));
+                    placeMaster(MasterAgent.getInstance(s, width - 2, height - 2));
                     break;
             }
 
@@ -78,20 +75,8 @@ public class Simulation {
             y = RandomUtils.getInt(0, height - 1);
         } while (!map.isFree(x, y) || map.isRestrictedSafeZone(x, y, species));
 
-        switch (species) {
-            case BOWSER:
-                agent = new Bowser(x, y, maxEp);
-                break;
-            case KING_BOO:
-                agent = new KingBoo(x, y, maxEp);
-                break;
-            case LUIGI:
-                agent = new Luigi(x, y, maxEp);
-                break;
-            case MARIO:
-                agent = new Mario(x, y, maxEp);
-                break;
-        }
+        // Generic Agent Creation
+        agent = new MobileAgent(x, y, species, maxEp);
 
         if (agent != null) {
             // Give initial unique message
@@ -134,114 +119,68 @@ public class Simulation {
 
     private void printStats() {
         System.out.println("Stats:");
-        if (participants.contains(Species.BOWSER))
-            System.out.println("Bowser Master Knowledge: " + MasterBowser.getInstance().getKnowledge().size());
-        if (participants.contains(Species.KING_BOO))
-            System.out.println("KingBoo Master Knowledge: " + MasterKingBoo.getInstance().getKnowledge().size());
-        if (participants.contains(Species.LUIGI))
-            System.out.println("Luigi Master Knowledge: " + MasterLuigi.getInstance().getKnowledge().size());
-        if (participants.contains(Species.MARIO))
-            System.out.println("Mario Master Knowledge: " + MasterMario.getInstance().getKnowledge().size());
+        for (Species s : participants) {
+            System.out.println(s.name() + " Master Knowledge: " + MasterAgent.getInstance(s).getKnowledge().size());
+        }
     }
 
     private void determineWinner() {
-        // Collect scores and energy
-        int bowserScore = participants.contains(Species.BOWSER) ? MasterBowser.getInstance().getKnowledge().size() : -1;
-        int kingBooScore = participants.contains(Species.KING_BOO) ? MasterKingBoo.getInstance().getKnowledge().size()
-                : -1;
-        int luigiScore = participants.contains(Species.LUIGI) ? MasterLuigi.getInstance().getKnowledge().size() : -1;
-        int marioScore = participants.contains(Species.MARIO) ? MasterMario.getInstance().getKnowledge().size() : -1;
+        // Collect scores and energy logic ...
+        // Generic refactor needed here too
 
-        int bowserEnergy = 0, kingBooEnergy = 0, luigiEnergy = 0, marioEnergy = 0;
+        System.out.println("Final Scores (Knowledge | Energy):");
 
-        for (LivingBeing agent : map.getAgents()) {
-            if (agent instanceof MobileAgent) {
-                MobileAgent mobile = (MobileAgent) agent;
-                switch (mobile.getSpecies()) {
-                    case BOWSER:
-                        bowserEnergy += mobile.getEnergy();
-                        break;
-                    case KING_BOO:
-                        kingBooEnergy += mobile.getEnergy();
-                        break;
-                    case LUIGI:
-                        luigiEnergy += mobile.getEnergy();
-                        break;
-                    case MARIO:
-                        marioEnergy += mobile.getEnergy();
-                        break;
+        int maxScore = -1;
+        // Calculate scores dynamically
+        for (Species s : participants) {
+            int score = MasterAgent.getInstance(s).getKnowledge().size();
+            int energy = 0;
+
+            for (LivingBeing agent : map.getAgents()) {
+                if (agent instanceof MobileAgent && ((MobileAgent) agent).getSpecies() == s) {
+                    energy += ((MobileAgent) agent).getEnergy();
                 }
+            }
+
+            System.out.println(s.name() + ": " + score + " | " + energy);
+            if (score > maxScore)
+                maxScore = score;
+        }
+
+        System.out.println("Max Knowledge Score: " + maxScore);
+
+        List<Species> knowledgeWinners = new ArrayList<>();
+        for (Species s : participants) {
+            if (MasterAgent.getInstance(s).getKnowledge().size() == maxScore) {
+                knowledgeWinners.add(s);
             }
         }
 
-        System.out.println("Final Scores (Knowledge | Energy):");
-        if (participants.contains(Species.BOWSER))
-            System.out.println("Bowser: " + bowserScore + " | " + bowserEnergy);
-        if (participants.contains(Species.KING_BOO))
-            System.out.println("KingBoo: " + kingBooScore + " | " + kingBooEnergy);
-        if (participants.contains(Species.LUIGI))
-            System.out.println("Luigi: " + luigiScore + " | " + luigiEnergy);
-        if (participants.contains(Species.MARIO))
-            System.out.println("Mario: " + marioScore + " | " + marioEnergy);
-
-        int maxScore = Math.max(Math.max(bowserScore, kingBooScore), Math.max(luigiScore, marioScore));
-        System.out.println("Max Knowledge Score: " + maxScore);
-
-        // Identify potential winners by Knowledge
-        List<Species> knowledgeWinners = new ArrayList<>();
-        if (bowserScore == maxScore)
-            knowledgeWinners.add(Species.BOWSER);
-        if (kingBooScore == maxScore)
-            knowledgeWinners.add(Species.KING_BOO);
-        if (luigiScore == maxScore)
-            knowledgeWinners.add(Species.LUIGI);
-        if (marioScore == maxScore)
-            knowledgeWinners.add(Species.MARIO);
-
         List<Species> finalWinners = new ArrayList<>();
 
-        // Break ties with Energy
         if (knowledgeWinners.size() > 1) {
             System.out.println("Knowledge Tie detected! Converting to Power (Energy) check...");
             int maxEnergy = -1;
-            // Calculate max energy among knowledge winners only
+
             for (Species s : knowledgeWinners) {
-                int e = 0;
-                switch (s) {
-                    case BOWSER:
-                        e = bowserEnergy;
-                        break;
-                    case KING_BOO:
-                        e = kingBooEnergy;
-                        break;
-                    case LUIGI:
-                        e = luigiEnergy;
-                        break;
-                    case MARIO:
-                        e = marioEnergy;
-                        break;
+                int energy = 0;
+                for (LivingBeing agent : map.getAgents()) {
+                    if (agent instanceof MobileAgent && ((MobileAgent) agent).getSpecies() == s) {
+                        energy += ((MobileAgent) agent).getEnergy();
+                    }
                 }
-                if (e > maxEnergy)
-                    maxEnergy = e;
+                if (energy > maxEnergy)
+                    maxEnergy = energy;
             }
 
             for (Species s : knowledgeWinners) {
-                int e = 0;
-                switch (s) {
-                    case BOWSER:
-                        e = bowserEnergy;
-                        break;
-                    case KING_BOO:
-                        e = kingBooEnergy;
-                        break;
-                    case LUIGI:
-                        e = luigiEnergy;
-                        break;
-                    case MARIO:
-                        e = marioEnergy;
-                        break;
+                int energy = 0;
+                for (LivingBeing agent : map.getAgents()) {
+                    if (agent instanceof MobileAgent && ((MobileAgent) agent).getSpecies() == s) {
+                        energy += ((MobileAgent) agent).getEnergy();
+                    }
                 }
-                if (e == maxEnergy) {
+                if (energy == maxEnergy) {
                     finalWinners.add(s);
                 }
             }
@@ -259,7 +198,7 @@ public class Simulation {
             // --- PLAYOFF LOGIC ---
             // Reset Masters
             for (Species s : participants) {
-                resetMaster(s);
+                MasterAgent.getInstance(s).reset();
             }
 
             // Start recursive simulation
@@ -268,20 +207,4 @@ public class Simulation {
         }
     }
 
-    private void resetMaster(Species s) {
-        switch (s) {
-            case BOWSER:
-                MasterBowser.getInstance().reset();
-                break;
-            case KING_BOO:
-                MasterKingBoo.getInstance().reset();
-                break;
-            case LUIGI:
-                MasterLuigi.getInstance().reset();
-                break;
-            case MARIO:
-                MasterMario.getInstance().reset();
-                break;
-        }
-    }
 }

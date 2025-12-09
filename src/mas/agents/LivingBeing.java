@@ -17,7 +17,9 @@ public abstract class LivingBeing {
         this.knowledge = new ArrayList<>();
     }
 
-    public abstract String getSymbol();
+    public String getSymbol() {
+        return species.getSymbol();
+    }
 
     public Species getSpecies() {
         return species;
