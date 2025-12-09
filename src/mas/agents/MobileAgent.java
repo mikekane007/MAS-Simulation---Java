@@ -22,6 +22,10 @@ public abstract class MobileAgent extends LivingBeing {
         this.lastDirection = RandomUtils.getItem(Direction.values());
     }
 
+    public int getEnergy() {
+        return energyPoints;
+    }
+
     public void move(Map map) {
         // 1. Check Energy / State
         if (energyPoints <= 0) {
@@ -112,8 +116,7 @@ public abstract class MobileAgent extends LivingBeing {
 
     private void consumeEnergy(Map map) {
         if (!map.isInSafeZone(this)) {
-            energyPoints -= 1; // Simplify to 1 per turn/action?
-            // "E.g. EPs are lost, depending on the number of tiles covered"
+            energyPoints -= 2; // Increased cost for faster burn
         }
     }
 
@@ -140,12 +143,14 @@ public abstract class MobileAgent extends LivingBeing {
     }
 
     private void shareRandomMessages(LivingBeing other) {
-        // Exchange up to 2 messages
-        if (!this.knowledge.isEmpty()) {
-            other.addMessage(RandomUtils.getItem(this.knowledge.toArray(new Message[0])));
-        }
-        if (!other.getKnowledge().isEmpty()) {
-            this.addMessage(RandomUtils.getItem(other.getKnowledge().toArray(new Message[0])));
+        // Exchange 3 messages for better knowledge spread
+        for (int i = 0; i < 3; i++) {
+            if (!this.knowledge.isEmpty()) {
+                other.addMessage(RandomUtils.getItem(this.knowledge.toArray(new Message[0])));
+            }
+            if (!other.getKnowledge().isEmpty()) {
+                this.addMessage(RandomUtils.getItem(other.getKnowledge().toArray(new Message[0])));
+            }
         }
     }
 
@@ -161,7 +166,16 @@ public abstract class MobileAgent extends LivingBeing {
     }
 
     private void stealMessage(LivingBeing loser, LivingBeing winner) {
-        if (!loser.getKnowledge().isEmpty()) {
+        if (loser.getKnowledge().isEmpty())
+            return;
+
+        // Steal 50% of messages (min 1)
+        int stealCount = Math.max(1, loser.getKnowledge().size() / 2);
+
+        for (int i = 0; i < stealCount; i++) {
+            if (loser.getKnowledge().isEmpty())
+                break;
+
             Message stolen = RandomUtils.getItem(loser.getKnowledge().toArray(new Message[0]));
             if (stolen != null) {
                 winner.addMessage(stolen);

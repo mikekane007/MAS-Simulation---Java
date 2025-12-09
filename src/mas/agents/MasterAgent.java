@@ -11,6 +11,10 @@ public abstract class MasterAgent extends LivingBeing {
         // Do nothing
     }
 
+    public void reset() {
+        this.knowledge.clear();
+    }
+
     @Override
     public String toString() {
         return "MASTER_" + species.name();
