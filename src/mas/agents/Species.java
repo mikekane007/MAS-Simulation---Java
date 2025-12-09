@@ -1,10 +1,10 @@
 package mas.agents;
 
 public enum Species {
-    ORC(Alliance.EVIL),
-    GOBLIN(Alliance.EVIL),
-    ELF(Alliance.GOOD),
-    HUMAN(Alliance.GOOD);
+    BOWSER(Alliance.EVIL),
+    KING_BOO(Alliance.EVIL),
+    LUIGI(Alliance.GOOD),
+    MARIO(Alliance.GOOD);
 
     private final Alliance alliance;
 

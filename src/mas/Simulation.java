@@ -18,7 +18,7 @@ public class Simulation {
     private final int width = 20;
     private final int height = 20;
     private final int AGENTS_PER_SPECIES = 4;
-    private final int MAX_STEPS = 100;
+    private final int MAX_STEPS = 500;
     private int step = 0;
 
     public Simulation() {
@@ -27,10 +27,10 @@ public class Simulation {
 
     public void initialize() {
         // 1. Place Masters
-        placeMaster(MasterOrc.getInstance(1, 1));
-        placeMaster(MasterGoblin.getInstance(width - 2, 1));
-        placeMaster(MasterElf.getInstance(1, height - 2));
-        placeMaster(MasterHuman.getInstance(width - 2, height - 2));
+        placeMaster(MasterBowser.getInstance(1, 1));
+        placeMaster(MasterKingBoo.getInstance(width - 2, 1));
+        placeMaster(MasterLuigi.getInstance(1, height - 2));
+        placeMaster(MasterMario.getInstance(width - 2, height - 2));
 
         // 2. Place Obstacles
         for (int i = 0; i < 20; i++) {
@@ -41,10 +41,10 @@ public class Simulation {
 
         // 3. Place Agents
         for (int i = 0; i < AGENTS_PER_SPECIES; i++) {
-            createAndPlaceAgent(Species.ORC, i);
-            createAndPlaceAgent(Species.GOBLIN, i);
-            createAndPlaceAgent(Species.ELF, i);
-            createAndPlaceAgent(Species.HUMAN, i);
+            createAndPlaceAgent(Species.BOWSER, i);
+            createAndPlaceAgent(Species.KING_BOO, i);
+            createAndPlaceAgent(Species.LUIGI, i);
+            createAndPlaceAgent(Species.MARIO, i);
         }
     }
 
@@ -56,7 +56,7 @@ public class Simulation {
 
     private void createAndPlaceAgent(Species species, int index) {
         MobileAgent agent = null;
-        int maxEp = RandomUtils.getInt(50, 100);
+        int maxEp = RandomUtils.getInt(200, 300);
         int x, y;
 
         do {
@@ -65,17 +65,17 @@ public class Simulation {
         } while (!map.isFree(x, y) || map.isRestrictedSafeZone(x, y, species));
 
         switch (species) {
-            case ORC:
-                agent = new Orc(x, y, maxEp);
+            case BOWSER:
+                agent = new Bowser(x, y, maxEp);
                 break;
-            case GOBLIN:
-                agent = new Goblin(x, y, maxEp);
+            case KING_BOO:
+                agent = new KingBoo(x, y, maxEp);
                 break;
-            case ELF:
-                agent = new Elf(x, y, maxEp);
+            case LUIGI:
+                agent = new Luigi(x, y, maxEp);
                 break;
-            case HUMAN:
-                agent = new Human(x, y, maxEp);
+            case MARIO:
+                agent = new Mario(x, y, maxEp);
                 break;
         }
 
@@ -107,7 +107,7 @@ public class Simulation {
             step++;
 
             try {
-                Thread.sleep(500); // Slow down for visualization
+                Thread.sleep(100); // Slow down for visualization
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -119,29 +119,29 @@ public class Simulation {
 
     private void printStats() {
         System.out.println("Stats:");
-        System.out.println("Orc Master Knowledge: " + MasterOrc.getInstance().getKnowledge().size());
-        System.out.println("Goblin Master Knowledge: " + MasterGoblin.getInstance().getKnowledge().size());
-        System.out.println("Elf Master Knowledge: " + MasterElf.getInstance().getKnowledge().size());
-        System.out.println("Human Master Knowledge: " + MasterHuman.getInstance().getKnowledge().size());
+        System.out.println("Bowser Master Knowledge: " + MasterBowser.getInstance().getKnowledge().size());
+        System.out.println("KingBoo Master Knowledge: " + MasterKingBoo.getInstance().getKnowledge().size());
+        System.out.println("Luigi Master Knowledge: " + MasterLuigi.getInstance().getKnowledge().size());
+        System.out.println("Mario Master Knowledge: " + MasterMario.getInstance().getKnowledge().size());
     }
 
     private void determineWinner() {
         // Collect scores
-        int orcScore = MasterOrc.getInstance().getKnowledge().size();
-        int goblinScore = MasterGoblin.getInstance().getKnowledge().size();
-        int elfScore = MasterElf.getInstance().getKnowledge().size();
-        int humanScore = MasterHuman.getInstance().getKnowledge().size();
+        int bowserScore = MasterBowser.getInstance().getKnowledge().size();
+        int kingBooScore = MasterKingBoo.getInstance().getKnowledge().size();
+        int luigiScore = MasterLuigi.getInstance().getKnowledge().size();
+        int marioScore = MasterMario.getInstance().getKnowledge().size();
 
-        int max = Math.max(Math.max(orcScore, goblinScore), Math.max(elfScore, humanScore));
+        int max = Math.max(Math.max(bowserScore, kingBooScore), Math.max(luigiScore, marioScore));
 
         System.out.println("Max Score: " + max);
-        if (orcScore == max)
-            System.out.println("Orcs Win!");
-        if (goblinScore == max)
-            System.out.println("Goblins Win!");
-        if (elfScore == max)
-            System.out.println("Elves Win!");
-        if (humanScore == max)
-            System.out.println("Humans Win!");
+        if (bowserScore == max)
+            System.out.println("Bowser Wins!");
+        if (kingBooScore == max)
+            System.out.println("King Boo Wins!");
+        if (luigiScore == max)
+            System.out.println("Luigi Wins!");
+        if (marioScore == max)
+            System.out.println("Mario Wins!");
     }
 }

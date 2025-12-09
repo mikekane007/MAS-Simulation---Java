@@ -81,13 +81,13 @@ public class Map {
 
     public boolean isInSafeZone(int x, int y, Species species) {
         switch (species) {
-            case ORC: // Top-Left
+            case BOWSER: // Top-Left
                 return x < SAFE_ZONE_SIZE && y < SAFE_ZONE_SIZE;
-            case GOBLIN: // Top-Right
+            case KING_BOO: // Top-Right
                 return x >= width - SAFE_ZONE_SIZE && y < SAFE_ZONE_SIZE;
-            case ELF: // Bottom-Left
+            case LUIGI: // Bottom-Left
                 return x < SAFE_ZONE_SIZE && y >= height - SAFE_ZONE_SIZE;
-            case HUMAN: // Bottom-Right
+            case MARIO: // Bottom-Right
                 return x >= width - SAFE_ZONE_SIZE && y >= height - SAFE_ZONE_SIZE;
             default:
                 return false;
@@ -110,19 +110,19 @@ public class Map {
         // Target is the center of their safe zone
         int targetX = 0, targetY = 0;
         switch (agent.getSpecies()) {
-            case ORC:
+            case BOWSER:
                 targetX = 0;
                 targetY = 0;
                 break;
-            case GOBLIN:
+            case KING_BOO:
                 targetX = width - 1;
                 targetY = 0;
                 break;
-            case ELF:
+            case LUIGI:
                 targetX = 0;
                 targetY = height - 1;
                 break;
-            case HUMAN:
+            case MARIO:
                 targetX = width - 1;
                 targetY = height - 1;
                 break;
