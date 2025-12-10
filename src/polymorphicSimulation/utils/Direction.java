@@ -1,14 +1,14 @@
 package polymorphicSimulation.utils;
 
 public enum Direction {
-    N(0, -1),
-    NE(1, -1),
-    E(1, 0),
-    SE(1, 1),
-    S(0, 1),
-    SW(-1, 1),
-    W(-1, 0),
-    NW(-1, -1);
+    NORTH(0, -1),
+    NORTHEAST(1, -1),
+    EAST(1, 0),
+    SOUTHEAST(1, 1),
+    SOUTH(0, 1),
+    SOUTHWEST(-1, 1),
+    WEST(-1, 0),
+    NORTHWEST(-1, -1);
 
     public final int dx;
     public final int dy;

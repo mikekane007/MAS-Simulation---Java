@@ -1,13 +1,9 @@
 package polymorphicSimulation.agents;
 
-import polymorphicSimulation.agents.Message;
 import polymorphicSimulation.utils.MonteCarloRNG;
 import polymorphicSimulation.utils.Direction;
 import polymorphicSimulation.environment.Map;
 import polymorphicSimulation.environment.Obstacle;
-
-import java.util.Collections;
-import java.util.List;
 
 public class Agent extends LivingBeing {
     protected int energyPoints;
@@ -26,39 +22,35 @@ public class Agent extends LivingBeing {
     }
 
     public void move(Map map) {
-        // 1. Check Energy / State
+        // Can't move if we're dead
         if (energyPoints <= 0) {
-            // Die and become obstacle
             System.out.println(this + " ran out of energy and turned into an obstacle.");
             map.removeAgent(this);
             return;
         }
 
-        // Recover energy if in SafeZone
+        // Heal up if we made it home
         if (map.isInSafeZone(this)) {
-            energyPoints = Math.min(maxEnergy, energyPoints + 5); // Recover 5 EP
+            energyPoints = Math.min(maxEnergy, energyPoints + 5);
         } else {
-            // 2. Determine Move
             int targetX = x;
             int targetY = y;
             Direction moveDir = null;
 
             double epRatio = (double) energyPoints / maxEnergy;
 
+            // Explore freely unless energy is critical (< 20%)
             if (epRatio >= 0.20) {
-                // Random move
                 moveDir = MonteCarloRNG.getItem(Direction.VALUES);
             } else {
-                // Go to SafeZone
                 moveDir = map.getDirectionToSafeZone(this);
             }
 
             targetX += moveDir.dx;
             targetY += moveDir.dy;
 
-            // 3. Check Validity and Collisions
+            // Hit a wall or enemy safe zone? Stay put, burn energy.
             if (!map.isValid(targetX, targetY) || map.isRestrictedSafeZone(targetX, targetY, this.species)) {
-                // Hit wall or restricted zone: lose EP, stay, safe last dir
                 consumeEnergy(map);
                 lastDirection = moveDir;
                 return;
@@ -67,24 +59,19 @@ public class Agent extends LivingBeing {
             Object target = map.getEntityAt(targetX, targetY);
 
             if (target == null) {
-                // Free space
                 map.moveAgent(this, targetX, targetY);
                 consumeEnergy(map);
                 lastDirection = moveDir;
             } else if (target instanceof Obstacle) {
-                // Blocked by obstacle
-                consumeEnergy(map); // Lose remaining energy for step? "loses as many EP as he has left to go" -
-                                    // assuming standard cost for now or full move cost
+                consumeEnergy(map);
                 lastDirection = moveDir;
             } else if (target instanceof LivingBeing) {
-                // Interaction
                 interact((LivingBeing) target);
-                // "movement can be stopped by ... an individual standing in the way"
-                // So we don't move into the tile, but we interact.
                 consumeEnergy(map);
             }
         }
 
+        // Always check if Master is nearby to offload data
         scanForMaster(map);
     }
 
@@ -97,15 +84,8 @@ public class Agent extends LivingBeing {
                 if (obj instanceof Master) {
                     Master master = (Master) obj;
                     if (master.getSpecies() == this.species) {
-                        // Transfer all distinct messages to master
-                        // Note: We keep copies? Or just give copies?
-                        // "Master collects them... obtain from other groups"
-                        // Usually we just copy.
                         shareKnowledge(master);
-                        // And Master shares back? Not necessarily.
-                        // But Master is "Wisest", so maybe gives info?
-                        // Requirement doesn't say.
-                        // Interaction with same population -> Union.
+                        // Download Master's knowledge too (union)
                         master.getKnowledge().forEach(this::addMessage);
                     }
                 }
@@ -115,7 +95,7 @@ public class Agent extends LivingBeing {
 
     private void consumeEnergy(Map map) {
         if (!map.isInSafeZone(this)) {
-            energyPoints -= 2; // Increased cost for faster burn
+            energyPoints -= 2;
         }
     }
 
@@ -125,14 +105,14 @@ public class Agent extends LivingBeing {
                 + other.getSpecies().getColorCode() + other + reset);
 
         if (other.getSpecies() == this.species) {
-            // Same population: Union of knowledge
+            // Friend: Swap everything
             shareKnowledge(other);
             other.getKnowledge().forEach(this::addMessage);
         } else if (other.getSpecies().getAlliance() == this.species.getAlliance()) {
-            // Same alliance: Exchange random messages
+            // Ally: Swap a few random stories
             shareRandomMessages(other);
         } else {
-            // Different alliance: Fight
+            // Enemy: Fight!
             fight(other);
         }
     }
@@ -144,7 +124,6 @@ public class Agent extends LivingBeing {
     }
 
     private void shareRandomMessages(LivingBeing other) {
-        // Exchange 3 messages for better knowledge spread
         for (int i = 0; i < 3; i++) {
             if (!this.knowledge.isEmpty()) {
                 other.addMessage(MonteCarloRNG.getItem(this.knowledge.toArray(new Message[0])));
@@ -156,8 +135,6 @@ public class Agent extends LivingBeing {
     }
 
     private void fight(LivingBeing other) {
-        // Simple 50/50 fight or based on something else?
-        // Winner gets random messages from loser
         boolean iWin = MonteCarloRNG.chance(0.5);
         if (iWin) {
             stealMessage(other, this);
@@ -170,7 +147,6 @@ public class Agent extends LivingBeing {
         if (loser.getKnowledge().isEmpty())
             return;
 
-        // Steal 50% of messages (min 1)
         int stealCount = Math.max(1, loser.getKnowledge().size() / 2);
 
         for (int i = 0; i < stealCount; i++) {

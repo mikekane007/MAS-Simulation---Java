@@ -1,9 +1,7 @@
 package polymorphicSimulation.agents;
 
-import polymorphicSimulation.agents.Message;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Collection;
 
 public abstract class LivingBeing {
     protected int x;

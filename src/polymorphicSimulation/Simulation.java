@@ -29,9 +29,8 @@ public class Simulation {
     }
 
     public void initialize() {
-        // 1. Place Masters & 3. Place Agents
+        // Place masters in their corners
         for (Species s : participants) {
-            // Generic Master Placement
             switch (s) {
                 case BOWSER:
                     placeMaster(SingletonMasterFactory.getMaster(s, 1, 1));
@@ -52,7 +51,7 @@ public class Simulation {
             }
         }
 
-        // 2. Place Obstacles
+        // Scatter some rocks
         for (int i = 0; i < 15; i++) {
             int x = MonteCarloRNG.getInt(0, width - 1);
             int y = MonteCarloRNG.getInt(0, height - 1);
@@ -61,26 +60,24 @@ public class Simulation {
     }
 
     private void placeMaster(Master master) {
-        // Force placement
         map.addAgent(master);
         System.out.println("Placed " + master + " at " + master.getX() + "," + master.getY());
     }
 
     private void createAndPlaceAgent(Species species, int index) {
         Agent agent = null;
-        int maxEp = 120; // Slightly more buffer
+        int maxEp = 120;
         int x, y;
 
+        // Find a valid starting spot (not a wall, not enemy safe zone)
         do {
             x = MonteCarloRNG.getInt(0, width - 1);
             y = MonteCarloRNG.getInt(0, height - 1);
         } while (!map.isFree(x, y) || map.isRestrictedSafeZone(x, y, species));
 
-        // Generic Agent Creation with Factory
         agent = SingletonMasterFactory.createAgent(species, x, y, maxEp);
 
         if (agent != null) {
-            // Give initial unique message
             agent.addMessage(new Message(species.name() + "_Msg_" + index));
             map.addAgent(agent);
         }
@@ -93,12 +90,11 @@ public class Simulation {
             System.out.println("\n--- Step " + step + " ---");
             map.display();
 
-            // Random order
+            // Shuffle order so no species has a turn advantage
             List<LivingBeing> turnOrder = new ArrayList<>(map.getAgents());
             Collections.shuffle(turnOrder);
 
             for (LivingBeing agent : turnOrder) {
-                // If agent is still on map and mobile
                 if (map.getAgents().contains(agent) && agent instanceof Agent) {
                     ((Agent) agent).move(map);
                 }
@@ -108,7 +104,7 @@ public class Simulation {
             step++;
 
             try {
-                Thread.sleep(1000); // Slow down for visualization
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -133,10 +129,32 @@ public class Simulation {
     }
 
     private void printStats() {
-        System.out.println("Stats:");
+        System.out.println("\n--- Statistics ---");
+        if (step == 0) {
+            System.out.println("Total Created (Static): [Bowser: " + Bowser.count + ", KingBoo: " + KingBoo.count +
+                    ", Luigi: " + Luigi.count + ", Mario: " + Mario.count + "]");
+            System.out.println();
+        }
+
+        System.out.printf("%-10s | %-10s | %-10s | %-10s%n", "Species", "Knowledge", "Alive", "Avg EP");
+        System.out.println("------------------------------------------------");
+
         for (Species s : participants) {
-            System.out.println(
-                    s.name() + " Master Knowledge: " + SingletonMasterFactory.getMaster(s).getKnowledge().size());
+            int msgCount = SingletonMasterFactory.getMaster(s).getKnowledge().size();
+            int aliveCount = 0;
+            int totalEnergy = 0;
+
+            for (LivingBeing lb : map.getAgents()) {
+                if (lb instanceof Agent && lb.getSpecies() == s) {
+                    aliveCount++;
+                    totalEnergy += ((Agent) lb).getEnergy();
+                }
+            }
+
+            double avgEnergy = aliveCount > 0 ? (double) totalEnergy / aliveCount : 0.0;
+
+            System.out.printf(s.getColorCode() + "%-10s\u001B[0m | %-10d | %-10d | %-10.1f%n",
+                    s.name(), msgCount, aliveCount, avgEnergy);
         }
     }
 
@@ -144,7 +162,6 @@ public class Simulation {
         System.out.println("Final Scores (Knowledge | Energy):");
 
         int maxScore = -1;
-        // Calculate scores dynamically
         for (Species s : participants) {
             int score = SingletonMasterFactory.getMaster(s).getKnowledge().size();
             int energy = 0;
@@ -172,7 +189,7 @@ public class Simulation {
         List<Species> finalWinners = new ArrayList<>();
 
         if (knowledgeWinners.size() > 1) {
-            System.out.println("Knowledge Tie detected! Converting to Power (Energy) check...");
+            System.out.println("Knowledge Tie! Checking total team energy...");
             int maxEnergy = -1;
 
             for (Species s : knowledgeWinners) {
@@ -201,21 +218,17 @@ public class Simulation {
             finalWinners.addAll(knowledgeWinners);
         }
 
-        // Final Result Handling
         if (finalWinners.size() == 1) {
             Species winner = finalWinners.get(0);
             System.out.println(winner.getColorCode() + "Winner: " + winner + "\u001B[0m");
         } else {
-            System.out.println("DOUBLE TIE (Knowledge & Energy)! Winners: " + finalWinners);
+            System.out.println("DOUBLE TIE! Sudden Death Playoff time.");
             System.out.println("Initiating SUDDEN DEATH PLAYOFF among " + finalWinners);
 
-            // --- PLAYOFF LOGIC ---
-            // Reset Masters
             for (Species s : participants) {
                 SingletonMasterFactory.getMaster(s).reset();
             }
 
-            // Start recursive simulation
             Simulation playoff = new Simulation(finalWinners);
             playoff.run();
         }

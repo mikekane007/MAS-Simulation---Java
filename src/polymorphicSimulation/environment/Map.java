@@ -11,10 +11,9 @@ import java.util.List;
 public class Map {
     private final int width;
     private final int height;
-    private final Object[][] grid; // Can contain LivingBeing or Obstacle
+    private final Object[][] grid; // LivingBeing or Obstacle
     private final List<LivingBeing> agents;
 
-    // SafeZone dimensions (e.g., 5x5 corners)
     private static final int SAFE_ZONE_SIZE = 5;
 
     public Map(int width, int height) {
@@ -37,7 +36,6 @@ public class Map {
             grid[agent.getX()][agent.getY()] = agent;
             agents.add(agent);
         } else {
-            // Try to find a free spot nearby or error
             System.err.println("Could not place agent at " + agent.getX() + "," + agent.getY());
         }
     }
@@ -63,16 +61,13 @@ public class Map {
     }
 
     public void moveAgent(LivingBeing agent, int newX, int newY) {
-        // Assume validation is done before calling this
         grid[agent.getX()][agent.getY()] = null;
         agent.setPosition(newX, newY);
         grid[newX][newY] = agent;
     }
 
     public void removeAgent(LivingBeing agent) {
-        grid[agent.getX()][agent.getY()] = null; // Clear from grid
-        // Intentionally NOT retrieving EP here, handled by agent logic
-        // But we might want to place an Obstacle where they died if requested
+        grid[agent.getX()][agent.getY()] = null;
         grid[agent.getX()][agent.getY()] = new Obstacle();
         agents.remove(agent);
     }
@@ -83,23 +78,20 @@ public class Map {
 
     public boolean isInSafeZone(int x, int y, Species species) {
         switch (species) {
-            case BOWSER: // Top-Left
+            case BOWSER:
                 return x < SAFE_ZONE_SIZE && y < SAFE_ZONE_SIZE;
-            case KING_BOO: // Top-Right
+            case KING_BOO:
                 return x >= width - SAFE_ZONE_SIZE && y < SAFE_ZONE_SIZE;
-            case LUIGI: // Bottom-Left
+            case LUIGI:
                 return x < SAFE_ZONE_SIZE && y >= height - SAFE_ZONE_SIZE;
-            case MARIO: // Bottom-Right
+            case MARIO:
                 return x >= width - SAFE_ZONE_SIZE && y >= height - SAFE_ZONE_SIZE;
             default:
                 return false;
         }
     }
 
-    // Check if x,y is a restricted area (SafeZone of OTHERS)
     public boolean isRestrictedSafeZone(int x, int y, Species mySpecies) {
-        // Iterate over all species, if it is in their safe zone and NOT mine, return
-        // true
         for (Species s : Species.values()) {
             if (s != mySpecies && isInSafeZone(x, y, s)) {
                 return true;
@@ -109,7 +101,6 @@ public class Map {
     }
 
     public Direction getDirectionToSafeZone(LivingBeing agent) {
-        // Target is the center of their safe zone
         int targetX = 0, targetY = 0;
         switch (agent.getSpecies()) {
             case BOWSER:
@@ -137,15 +128,32 @@ public class Map {
             if (d.dx == dx && d.dy == dy)
                 return d;
         }
-        return MonteCarloRNG.getItem(Direction.values()); // Fallback
+        return MonteCarloRNG.getItem(Direction.values());
     }
 
     public List<LivingBeing> getAgents() {
         return agents;
     }
 
+    public int getSurroundingTilesCount(int x, int y) {
+        if (!isValid(x, y))
+            return 0;
+
+        boolean isLeft = (x == 0);
+        boolean isRight = (x == width - 1);
+        boolean isTop = (y == 0);
+        boolean isBottom = (y == height - 1);
+
+        if ((isLeft || isRight) && (isTop || isBottom)) {
+            return 3; // Corner
+        } else if (isLeft || isRight || isTop || isBottom) {
+            return 5; // Border
+        } else {
+            return 8; // Center
+        }
+    }
+
     public void display() {
-        // Reset code
         final String RESET = ColorInConsole.RESET;
 
         for (int y = 0; y < height; y++) {

@@ -20,10 +20,32 @@ public class SingletonMasterFactory {
     }
 
     public static Master getMaster(Species species, int x, int y) {
-        return Master.getInstance(species, x, y);
+        switch (species) {
+            case BOWSER:
+                return MasterBowser.getInstance(x, y);
+            case KING_BOO:
+                return MasterKingBoo.getInstance(x, y);
+            case LUIGI:
+                return MasterLuigi.getInstance(x, y);
+            case MARIO:
+                return MasterMario.getInstance(x, y);
+            default:
+                throw new IllegalArgumentException("Unknown Master species");
+        }
     }
 
     public static Master getMaster(Species species) {
-        return Master.getInstance(species);
+        switch (species) {
+            case BOWSER:
+                return MasterBowser.getInstance();
+            case KING_BOO:
+                return MasterKingBoo.getInstance();
+            case LUIGI:
+                return MasterLuigi.getInstance();
+            case MARIO:
+                return MasterMario.getInstance();
+            default:
+                throw new IllegalArgumentException("Unknown Master species");
+        }
     }
 }
