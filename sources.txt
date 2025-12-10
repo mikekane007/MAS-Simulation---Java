@@ -2,8 +2,17 @@ src/mas/Simulation.java
 src/mas/utils/RandomUtils.java
 src/mas/agents/LivingBeing.java
 src/mas/agents/MobileAgent.java
+src/mas/agents/AgentFactory.java
 src/mas/agents/Species.java
 src/mas/agents/Alliance.java
+src/mas/agents/species/Bowser.java
+src/mas/agents/species/MasterLuigi.java
+src/mas/agents/species/KingBoo.java
+src/mas/agents/species/Mario.java
+src/mas/agents/species/MasterMario.java
+src/mas/agents/species/MasterKingBoo.java
+src/mas/agents/species/MasterBowser.java
+src/mas/agents/species/Luigi.java
 src/mas/agents/MasterAgent.java
 src/mas/world/Obstacle.java
 src/mas/world/Direction.java
